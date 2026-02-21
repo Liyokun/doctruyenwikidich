@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA READER</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+    <style>
+        /* --- 1. CẤU HÌNH CƠ BẢN --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            background-color: #111; 
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden; 
+            position: relative;
+        }
+
+        /* ẢNH NỀN (BACKGROUND LAYER) */
+        #bg-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            z-index: 0; filter: brightness(0.8); 
+        }
+
+        /* --- 2. HEADER --- */
+        .header-nav {
+            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; z-index: 100;
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(100px);
+            transition: top 0.3s;
+        }
+        .nav-btn {
+            font-size: 24px; color: #fff; cursor: pointer;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- 3. THANH CÀI ĐẶT CÓ CUỘN NGANG --- */
+        #settings-bar {
+            position: fixed; top: 60px; right: 0; left: 0;
+            background: rgba(0,0,0,0.95); border-bottom: 1px solid #333;
+            padding: 15px; z-index: 99;
+            display: none; flex-direction: column; gap: 15px;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .set-row { display: flex; align-items: center; gap: 10px; }
+        .set-label { color: #aaa; font-size: 12px; width: 45px; flex-shrink: 0; }
+        
+        /* Hỗ trợ cuộn ngang cho các thẻ tùy chọn */
+        .scroll-row {
+            overflow-x: auto; white-space: nowrap; padding-bottom: 5px;
+            scrollbar-width: none; /* Ẩn scrollbar Firefox */
+        }
+        .scroll-row::-webkit-scrollbar { display: none; } /* Ẩn scrollbar Chrome/Safari */
+
+        .color-btn {
+            width: 32px; height: 32px; border-radius: 50%; border: 2px solid #555; cursor: pointer;
+            flex-shrink: 0;
+        }
+        .color-btn.active { border-color: #00f2ff; transform: scale(1.1); }
+
+        .font-btn {
+            padding: 8px 12px; background: #222; border: 1px solid #444; color: #fff;
+            border-radius: 5px; font-size: 13px; cursor: pointer; text-align: center;
+            flex-shrink: 0; min-width: 60px;
+        }
+        .font-btn.active { background: #fff; color: #000; }
+
+        /* --- 4. KHUNG CHỨA NỘI DUNG --- */
+        #reader-scroll {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            overflow-y: auto; z-index: 10;
+            padding-top: 60px; 
+            scroll-behavior: smooth;
+        }
+
+        #content-card {
+            width: 90%; 
+            margin: 0 auto;
+            min-height: 80vh;
+            padding: 25px 20px;
+            border-radius: 10px;
+            background-color: rgba(20, 20, 20, 1); 
+            color: #ccc;
+            font-size: 18px;
+            line-height: 1.6;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            transition: background 0.3s, color 0.3s, font-size 0.3s;
+        }
+
+        #content-body p { margin-bottom: 15px; text-align: justify; }
+        #chapter-title { font-weight: bold; font-size: 1.2em; margin-bottom: 20px; text-align: center; opacity: 0.8; }
+
+        .spacer-bottom { height: 720px; }
+
+        /* --- 5. NÚT CUỘN XUỐNG DƯỚI (FIX MŨI TÊN) --- */
+        #btn-scroll-end {
+            position: fixed; bottom: 80px; right: 20px;
+            width: 45px; height: 45px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+            color: #fff; font-size: 20px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 90; backdrop-filter: blur(5px);
+        }
+
+        /* --- 6. BOTTOM NAV --- */
+        #bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(100px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 100;
+        }
+
+        .nav-arrow { font-size: 30px; color: #fff; padding: 10px; cursor: pointer; user-select: none; }
+        .nav-arrow:active { color: #00f2ff; transform: scale(0.9); }
+
+        #chap-input-box {
+            display: flex; align-items: center; gap: 5px;
+            background: #222; padding: 8px 20px; border-radius: 20px; border: 1px solid #444; cursor: pointer;
+        }
+        #chap-display { color: #fff; font-size: 16px; font-weight: bold; }
+
+        /* --- 7. LOADING --- */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,1); z-index: 200;
+            display: none; justify-content: center; align-items: center; flex-direction: column;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #fff;
+            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="bg-layer"></div>
+
+    <div class="header-nav" id="header">
+        <div class="nav-btn" onclick="goBack()">&#8592;</div>
+        <div class="nav-btn" onclick="toggleSettings()">📜</div>
+    </div>
+
+    <div id="settings-bar">
+        <div class="set-row scroll-row">
+            <span class="set-label">MÀU</span>
+            <div class="color-btn" style="background:#141414" onclick="setTheme('dark')" title="Đen"></div>
+            <div class="color-btn" style="background:#f5f5f5" onclick="setTheme('light')" title="Sáng"></div>
+            <div class="color-btn" style="background:#ffffff" onclick="setTheme('pure-white')" title="Trắng tinh"></div>
+            <div class="color-btn" style="background:#fdf6e3" onclick="setTheme('yellow')" title="Vàng nhạt"></div>
+            <div class="color-btn" style="background:#f4ecd8" onclick="setTheme('sepia')" title="Sách cổ"></div>
+            <div class="color-btn" style="background:#e3f2fd" onclick="setTheme('blue')" title="Xanh nhạt"></div>
+            <div class="color-btn" style="background:#3a3a3a" onclick="setTheme('gray')" title="Xám"></div>
+            <div class="color-btn" style="background:#2c3e50" onclick="setTheme('midnight')" title="Xanh đêm"></div>
+            <div class="color-btn" style="background:#4e342e" onclick="setTheme('brown')" title="Nâu"></div>
+            <div class="color-btn" style="background:#e8f5e9" onclick="setTheme('green')" title="Bảo vệ mắt"></div>
+        </div>
+        <div class="set-row">
+            <span class="set-label">CỠ</span>
+            <div class="font-btn" style="flex:1" onclick="adjFont(-2)">A-</div>
+            <div class="font-btn" style="flex:1" onclick="adjFont(2)">A+</div>
+        </div>
+        <div class="set-row scroll-row">
+            <span class="set-label">FONT</span>
+            <div class="font-btn" onclick="setFont('Segoe UI')">Sans</div>
+            <div class="font-btn" onclick="setFont('Times New Roman')">Serif</div>
+            <div class="font-btn" onclick="setFont('Arial')">Arial</div>
+            <div class="font-btn" onclick="setFont('Verdana')">Verdana</div>
+            <div class="font-btn" onclick="setFont('Georgia')">Georgia</div>
+            <div class="font-btn" onclick="setFont('Courier New')">Mono</div>
+            <div class="font-btn" onclick="setFont('Tahoma')">Tahoma</div>
+        </div>
+    </div>
+
+    <div id="reader-scroll">
+        <div id="content-card">
+            <div id="chapter-title">Đang tải...</div>
+            <div id="content-body"></div>
+        </div>
+        <div class="spacer-bottom"></div> 
+    </div>
+
+    <div id="btn-scroll-end" onclick="scrollToBottom()">🍁</div>
+
+    <div id="bottom-nav">
+        <div class="nav-arrow" onclick="prevChap()">&#8592;</div>
+        <div id="chap-input-box" onclick="promptJump()">
+            <span id="chap-display">Chương 0</span>
+        </div>
+        <div class="nav-arrow" onclick="nextChap()">&#8594;</div>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div style="color:#fff">ĐANG TẢI DỮ LIỆU...</div>
+    </div>
+
+    <script>
+        const PROXY_HOST = "https://doctruyen01.nguyenphuoctu6554.workers.dev/?url=";
+        const urlParams = new URLSearchParams(window.location.search);
+        const storyID = urlParams.get('id');
+
+        // CHUYỂN CÁC BIẾN RA NGOÀI ĐỂ ĐỢI DỮ LIỆU BẤT ĐỒNG BỘ
+        let libData = [];
+        let story = null;
+        let userConfig = {
+            bgColor: 'rgba(20,20,20,0.9)', textColor: '#ccc', fontSize: 18, fontFamily: 'Segoe UI'
+        };
+
+        // ==========================================
+        // LÕI ÁNH XẠ LOGIC URL (THÔNG MINH)
+        // ==========================================
+        let logicalToIndex = {}; // Map: Số Chương -> Index Mảng
+        let indexToLogical = {}; // Map: Index Mảng -> Số Chương
+        let availableNums = [];  // Danh sách các chương đã sắp xếp [1, 2, 5, 39...]
+        let useLogical = false;
+        let currentLogicalNum = 0;
+        let currentArrayIndex = 0; // Dự phòng nếu URL mã hóa 100% không có số
+
+        // GỌI HÀM ASYNC KHI VỪA MỞ TRANG
+        window.onload = async function() {
+            // Lấy dữ liệu từ IndexedDB
+            libData = await localforage.getItem('aura_library_v2') || [];
+            
+            for(let cat of libData) {
+                story = cat.stories.find(s => s.id === storyID);
+                if(story) break;
+            }
+
+            if(!story) { alert("Lỗi dữ liệu!"); window.history.back(); return; }
+
+            // Lấy cấu hình Theme từ IndexedDB
+            const savedConfig = await localforage.getItem('aura_reader_config');
+            if(savedConfig) userConfig = savedConfig;
+
+            // Chạy logic xây dựng cây thông tin chương sau khi có được story
+            if (story.chapters) {
+                story.chapters.forEach((ch, idx) => {
+                    const match = ch.url.match(/\/(?:chuong|trang|phan|quyen|tap|chap)-(\d+)/i);
+                    if (match && match[1]) {
+                        let num = parseInt(match[1], 10);
+                        if (logicalToIndex[num] === undefined) {
+                            logicalToIndex[num] = idx;
+                            indexToLogical[idx] = num;
+                            availableNums.push(num);
+                        }
+                    }
+                });
+                availableNums.sort((a,b) => a - b); 
+            }
+
+            useLogical = availableNums.length > 0;
+
+            setupUI();
+            applyConfig();
+            initChapter();
+        };
+
+        function setupUI() {
+            if(story.customBg) document.getElementById('bg-layer').style.backgroundImage = `url('${story.customBg}')`;
+        }
+
+        // Quyết định sẽ đọc chương nào khi mới vào
+        function initChapter() {
+            let req = parseInt(urlParams.get('chapter'));
+            if (isNaN(req)) req = 0;
+
+            if (useLogical) {
+                if (req === 0) {
+                    currentLogicalNum = availableNums[0];
+                } 
+                else if (logicalToIndex[req] !== undefined) {
+                    currentLogicalNum = req;
+                } 
+                else if (indexToLogical[req] !== undefined) {
+                    currentLogicalNum = indexToLogical[req];
+                } 
+                else {
+                    currentLogicalNum = availableNums[0];
+                }
+                loadLogicalChapter(currentLogicalNum);
+            } else {
+                currentArrayIndex = req;
+                loadArrayChapter(currentArrayIndex);
+            }
+        }
+
+        // Tải theo số chương logic đã bóc từ URL
+        async function loadLogicalChapter(num) {
+            let idx = logicalToIndex[num];
+            if (idx === undefined) return;
+            
+            currentLogicalNum = num;
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('chap-display').innerText = `Chương ${num}`;
+            
+            await renderChapterContent(idx);
+
+            // Cập nhật lại lịch sử đọc
+            story.lastReadIndex = num;
+            await saveLibrary();
+
+            // Tải ngầm 2 chương logic tiếp theo
+            let pos = availableNums.indexOf(num);
+            if (pos < availableNums.length - 1) prefetchArrayIdx(logicalToIndex[availableNums[pos+1]]);
+            if (pos < availableNums.length - 2) prefetchArrayIdx(logicalToIndex[availableNums[pos+2]]);
+        }
+
+        // Tải dự phòng theo Index
+        async function loadArrayChapter(idx) {
+            if (idx < 0 || idx >= story.chapters.length) return;
+            currentArrayIndex = idx;
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('chap-display').innerText = `Chương ${idx + 1}`;
+            
+            await renderChapterContent(idx);
+            story.lastReadIndex = idx;
+            await saveLibrary();
+
+            prefetchArrayIdx(idx + 1);
+            prefetchArrayIdx(idx + 2);
+        }
+
+        // Lõi xuất dữ liệu (Lấy từ IndexedDB)
+        async function renderChapterContent(idx) {
+            const keyS1 = `${storyID}_CH_${idx}`; 
+            let content = await localforage.getItem(keyS1);
+
+            if(!content) {
+                try {
+                    content = await fetchChapterContent(idx);
+                    await localforage.setItem(keyS1, content);
+                } catch(e) {
+                    content = `<p style='color:red'>Lỗi tải chương: ${e.message}. Vui lòng kiểm tra mạng.</p>`;
+                }
+            }
+
+            const chapInfo = story.chapters[idx];
+            document.getElementById('chapter-title').innerText = chapInfo.name;
+            document.getElementById('content-body').innerHTML = content;
+            document.getElementById('reader-scroll').scrollTop = 0;
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        async function fetchChapterContent(idx) {
+            const chap = story.chapters[idx];
+            const res = await fetch(PROXY_HOST + encodeURIComponent(chap.url));
+            if(!res.ok) throw new Error("Kết nối thất bại");
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            
+            const body = doc.getElementById('bookContentBody');
+            if(!body) return "<p>Không tìm thấy nội dung.</p>";
+            
+            let clean = "";
+            body.querySelectorAll('p').forEach(p => {
+                if(p.innerText.trim()) clean += `<p>${p.innerText.trim()}</p>`;
+            });
+            return clean;
+        }
+
+        async function prefetchArrayIdx(idx) {
+            const key = `${storyID}_CH_${idx}`;
+            const existing = await localforage.getItem(key);
+            if(!existing && idx < story.chapters.length) {
+                try {
+                    const txt = await fetchChapterContent(idx);
+                    await localforage.setItem(key, txt);
+                } catch(e) {}
+            }
+        }
+
+        // --- GIAO DIỆN & SETTINGS ---
+        function toggleSettings() {
+            const bar = document.getElementById('settings-bar');
+            bar.style.display = bar.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function setTheme(type) {
+            if(type === 'dark') { userConfig.bgColor = 'rgba(20,20,20,1)'; userConfig.textColor = '#ccc'; }
+            else if(type === 'light') { userConfig.bgColor = 'rgba(245,245,245,1)'; userConfig.textColor = '#000'; }
+            else if(type === 'pure-white') { userConfig.bgColor = 'rgba(255,255,255,1)'; userConfig.textColor = '#000'; } // MÀU MỚI: TRẮNG TINH
+            else if(type === 'yellow') { userConfig.bgColor = 'rgba(253,246,227,1)'; userConfig.textColor = '#333'; }
+            else if(type === 'sepia') { userConfig.bgColor = 'rgba(244,236,216,1)'; userConfig.textColor = '#5c4b37'; } // MÀU MỚI: SÁCH CỔ
+            else if(type === 'blue') { userConfig.bgColor = 'rgba(227,242,253,1)'; userConfig.textColor = '#222'; }
+            else if(type === 'gray') { userConfig.bgColor = 'rgba(58,58,58,1)'; userConfig.textColor = '#eee'; }
+            else if(type === 'midnight') { userConfig.bgColor = 'rgba(44,62,80,1)'; userConfig.textColor = '#ecf0f1'; }
+            else if(type === 'brown') { userConfig.bgColor = 'rgba(78,52,46,1)'; userConfig.textColor = '#d7ccc8'; }
+            else if(type === 'green') { userConfig.bgColor = 'rgba(232,245,233,1)'; userConfig.textColor = '#1b5e20'; }
+            applyConfig();
+        }
+
+        function adjFont(delta) { userConfig.fontSize += delta; applyConfig(); }
+        function setFont(font) { userConfig.fontFamily = font; applyConfig(); }
+
+        // Bất đồng bộ hóa việc lưu thiết lập
+        async function applyConfig() {
+            const card = document.getElementById('content-card');
+            card.style.backgroundColor = userConfig.bgColor;
+            card.style.color = userConfig.textColor;
+            card.style.fontSize = userConfig.fontSize + 'px';
+            card.style.fontFamily = userConfig.fontFamily;
+            await localforage.setItem('aura_reader_config', userConfig);
+        }
+
+        // --- ĐIỀU HƯỚNG ---
+        function prevChap() {
+            if (useLogical) {
+                let pos = availableNums.indexOf(currentLogicalNum);
+                if (pos > 0) loadLogicalChapter(availableNums[pos - 1]);
+            } else {
+                if (currentArrayIndex > 0) loadArrayChapter(currentArrayIndex - 1);
+            }
+        }
+
+        function nextChap() {
+            if (useLogical) {
+                let pos = availableNums.indexOf(currentLogicalNum);
+                if (pos < availableNums.length - 1) loadLogicalChapter(availableNums[pos + 1]);
+            } else {
+                if (currentArrayIndex < story.chapters.length - 1) loadArrayChapter(currentArrayIndex + 1);
+            }
+        }
+        
+        function promptJump() {
+            if (useLogical) {
+                const val = prompt(`Nhập số chương (Từ ${availableNums[0]} đến ${availableNums[availableNums.length-1]}):`, currentLogicalNum);
+                if(val) {
+                    let target = parseInt(val);
+                    if(logicalToIndex[target] !== undefined) loadLogicalChapter(target);
+                    else alert("Chương này không tồn tại trong dữ liệu của bạn!");
+                }
+            } else {
+                const val = prompt(`Nhập số chương (1 - ${story.chapters.length}):`, currentArrayIndex + 1);
+                if(val) {
+                    let target = parseInt(val) - 1;
+                    if(target >= 0 && target < story.chapters.length) loadArrayChapter(target);
+                }
+            }
+        }
+
+        function scrollToBottom() {
+            const scroller = document.getElementById('reader-scroll');
+            scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
+        }
+
+        function goBack() { window.location.href = `library02.html?id=${storyID}`; }
+        
+        // Cập nhật thư viện sang hàm Bất đồng bộ
+        async function saveLibrary() { await localforage.setItem('aura_library_v2', libData); }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA - CHI TIẾT TRUYỆN</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+    <style>
+        /* --- 1. CẤU HÌNH CƠ BẢN --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            background-color: #050505;
+            font-family: 'Segoe UI', sans-serif;
+            color: #fff;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+/* Lớp nền hệ thống */
+#bg-system {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    z-index: -1; /* Nằm dưới cùng */
+    filter: blur(50px) brightness(0.5); /* Làm mờ và làm tối để nổi bật nội dung */
+    transform: scale(1.1); /* Tránh lộ mép trắng khi bị mờ */
+}
+
+/* Đảm bảo body trong suốt để thấy nền */
+body {
+    background-color: transparent !important;
+}
+        /* --- 2. HEADER CỐ ĐỊNH --- */
+        .header-fixed {
+            height: 60px;
+            display: flex; align-items: center; padding: 0 15px;
+            background: rgba(0,0,0,0.8);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .back-btn { font-size: 28px; padding: 10px; cursor: pointer; margin-right: 15px; }
+        .header-title { 
+            font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%; color: #aaa;
+        }
+
+        /* --- 3. KHUNG CUỘN CHÍNH --- */
+        .scroll-content {
+            flex: 1; overflow-y: auto; padding: 80px 20px 40px 20px; 
+        }
+
+        /* --- 4. THÔNG TIN TRUYỆN (SẮP XẾP LẠI) --- */
+        .big-info-card {
+            text-align: center; margin-bottom: 30px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        
+        .big-cover-box {
+            width: 120px; height: 170px; margin-bottom: 15px;
+            border-radius: 8px; overflow: hidden;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .big-cover-img { width: 100%; height: 100%; object-fit: cover; }
+
+        .big-title { 
+            font-size: 18px; font-weight: bold; margin-bottom: 8px; 
+            line-height: 1.4; color: #fff; max-width: 90%;
+        }
+        
+        .big-author { font-size: 14px; color: #888; margin-bottom: 15px; }
+        
+        .tags-wrapper {
+            display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; width: 100%;
+        }
+        .tag-big { 
+            background: #222; padding: 5px 10px; border-radius: 20px; 
+            font-size: 12px; color: #ccc; border: 1px solid #444;
+        }
+
+        /* --- 5. BẢNG ĐIỀU KHIỂN --- */
+        .control-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px; padding: 20px; margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .panel-header { 
+            font-weight: bold; font-size: 16px; margin-bottom: 15px; 
+            color: #ddd; display: flex; justify-content: space-between; align-items: center;
+        }
+        .highlight-num { color: #00f2ff; font-family: monospace; font-size: 16px; }
+
+        /* Nút thao tác */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .act-btn {
+            padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);text-align: center;
+            background: rgba(0,0,0,0.5); color: #fff; font-weight: bold; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+        }
+        .act-btn:active { background: rgba(255,255,255,0.1); transform: scale(0.98);text-align: center; }
+        .act-btn.primary { background: #fff; color: #000; border: none; }
+        
+        .download-zone {
+            border-top: 1px dashed rgba(255,255,255,0.2);
+            padding-top: 15px; margin-top: 15px;
+        }
+        .dl-btn {
+            width: 100%; padding: 12px; background: #222; border: 1px solid #555;
+            color: #ddd; font-weight: bold; cursor: pointer; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: 0.2s;
+        }
+        .dl-btn:active { background: #333; }
+
+        /* Nút update chuyên biệt */
+        .update-btn {
+            background: rgba(46, 204, 113, 0.1); color: #2ecc71; 
+            border: 1px dashed #2ecc71; margin-bottom: 20px;
+        }
+        .update-btn:active { background: rgba(46, 204, 113, 0.2); }
+
+        /* --- 6. KÉN ẢNH --- */
+        .wallpaper-pod {
+            height: 120px; border-radius: 12px; 
+            border: 2px dashed rgba(255,255,255,0.2);
+            margin-bottom: 20px; position: relative; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            background: #0a0a0a; cursor: pointer; transition: 0.3s;
+        }
+        .custom-bg-preview {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; opacity: 0.4; z-index: 1;
+        }
+        .pod-icon { font-size: 24px; z-index: 2; color: #fff; }
+        .pod-label { position: absolute; bottom: 10px; width: 100%; text-align: center; font-size: 11px; color: #aaa; z-index: 2; }
+        #bg-upload { display: none; }
+
+        /* --- 7. THỐNG KÊ --- */
+        .data-stats {
+            background: rgba(20,0,0,0.3); border: 1px solid #331111;
+            padding: 15px; border-radius: 8px; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .data-info { font-size: 13px; color: #888; }
+        .data-val { color: #fff; font-weight: bold; font-size: 15px; }
+        .btn-clear { color: #ff4444; font-size: 20px; cursor: pointer; padding: 5px; }
+
+        /* --- 8. MODAL --- */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); backdrop-filter: blur(5px);
+            z-index: 2000; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            width: 85%; max-width: 320px; background: #111; border: 1px solid #fff; 
+            border-radius: 12px; padding: 25px; text-align: center;
+        }
+        .modal-box.wide { max-width: 90%; width: 450px; }
+        
+        .modal-title { margin-bottom: 15px; font-weight: bold; font-size: 18px; text-transform: uppercase;}
+        .num-input { 
+            width: 100%; padding: 15px; background: #000; border: 1px solid #555; 
+            color: #fff; text-align: center; border-radius: 6px; font-size: 20px; margin-bottom: 20px;
+        }
+        .modal-btn-group { display: flex; gap: 10px; }
+        .m-btn { flex: 1; padding: 12px; background: #333; border: 1px solid #555; color: #fff; cursor: pointer; border-radius: 6px; font-weight: bold; }
+        .m-btn.primary { background: #fff; color: #000; }
+
+        /* Loading Screen */
+        #modal-loading-lock { z-index: 3000; pointer-events: auto; }
+        .loading-icon { font-size: 40px; animation: pulse 1s infinite; margin-bottom: 15px; display: block; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .log-text { font-size: 12px; color: #888; margin-top: 10px; min-height: 20px; }
+
+    </style>
+</head>
+<body>
+<div id="bg-system"></div>
+    <div class="header-fixed">
+        <div class="back-btn" onclick="window.location.href='library01.html'">&#8592;</div>
+        <div class="header-title" id="header-title">ĐANG TẢI...</div>
+    </div>
+
+    <div class="scroll-content">
+        
+        <div class="big-info-card">
+            <div class="big-cover-box">
+                <img id="story-cover" class="big-cover-img" src="" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiBmaWxsPSIjMzMzIj48cGF0aCBkPSJNMCAwaDEwMHYxMDBIMHoiLz48L3N2Zz4='">
+            </div>
+            <div class="big-title" id="story-title">...</div>
+            <div class="big-author" id="story-author">...</div>
+            <div class="tags-wrapper" id="story-tags"></div>
+        </div>
+
+        <div class="control-panel">
+            <div class="panel-header">
+                <span>MỤC LỤC</span>
+                <span>Đến chương: <span class="highlight-num" id="total-chapters">0</span></span>
+            </div>
+
+            <div class="dl-btn update-btn" onclick="openUpdateModal()">
+                <span>🔄 CẬP NHẬT CHƯƠNG MỚI</span>
+            </div>
+
+            <div class="action-grid">
+                <div class="act-btn primary" onclick="readFromStart()">
+                    <span>ĐỌC TỪ ĐẦU<br>📖</span>
+                    <span style="font-size:10px; opacity:0.7">Chương 1</span>
+                </div>
+                <div class="act-btn" onclick="readContinue()">
+                    <span>ĐỌC TIẾP<br>⏩️</span>
+                    <span style="font-size:10px; opacity:0.7" id="last-read-txt">Chưa đọc</span>
+                </div>
+            </div>
+
+            <div class="download-zone">
+                <div class="dl-btn" onclick="openStep1()">
+                    <span>⬇️ TẢI DỮ LIỆU ĐỂ ĐỌC OFFLINE</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="wallpaper-pod" onclick="document.getElementById('bg-upload').click()">
+            <img id="custom-bg-img" class="custom-bg-preview" style="display:none">
+            <div class="pod-icon">+</div>
+            <div class="pod-label">CÀI HÌNH NỀN ĐỌC</div>
+            <input type="file" id="bg-upload" accept="image/*" onchange="handleBgUpload(this)">
+        </div>
+
+        <div class="data-stats">
+            <div>
+                <div class="data-info">Dữ liệu đã tải</div>
+                <div class="data-val"><span id="data-size">0.00</span> KB</div>
+                <div class="data-info" style="font-size: 11px; margin-top: 5px;">Đã tải: <span id="downloaded-count">0</span> chương</div>
+            </div>
+            <div class="btn-clear" onclick="clearStoryData()">🗑️</div>
+        </div>
+
+    </div>
+
+    <div id="modal-update-chapters" class="modal-overlay">
+        <div class="modal-box wide">
+            <div class="modal-title">CẬP NHẬT CHƯƠNG</div>
+            <div style="color:#aaa; font-size:13px; margin-bottom:15px">Dán danh sách chương lấy từ Console vào đây. Dữ liệu cũ bị trùng URL sẽ được tự động bỏ qua.</div>
+            <textarea id="input-update-data" style="width:100%; height: 200px; padding:15px; background:#000; border:1px solid #555; color:#fff; border-radius:8px; margin-bottom:20px; white-space: pre; overflow-wrap: normal; overflow-x: auto;" placeholder="Ví dụ: [1] Phần 36 : https://..."></textarea>
+            
+            <div class="modal-btn-group">
+                <div class="m-btn" onclick="closeModal('modal-update-chapters')">HỦY</div>
+                <div class="m-btn primary" onclick="handleUpdateStory()">CẬP NHẬT</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-step1" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">BƯỚC 1/2</div>
+            <div style="color:#aaa; font-size:13px; margin-bottom:10px">Nhập số lượng chương muốn tải</div>
+            <input type="number" id="input-dl-count" class="num-input" placeholder="VD: 50">
+            <div class="modal-btn-group">
+                <div class="m-btn" onclick="closeModal('modal-step1')">HỦY</div>
+                <div class="m-btn primary" onclick="goToStep2()">TIẾP</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-step2" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">BƯỚC 2/2</div>
+            <div style="color:#aaa; font-size:13px; margin-bottom:10px">Bắt đầu từ chương số mấy?</div>
+            <input type="number" id="input-dl-start" class="num-input" placeholder="VD: 1">
+            <div class="modal-btn-group">
+                <div class="m-btn" onclick="backToStep1()">QUAY LẠI</div>
+                <div class="m-btn primary" onclick="confirmDownload()">TẢI NGAY</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-loading-lock" class="modal-overlay">
+        <div class="modal-box">
+            <span class="loading-icon">🔎</span>
+            <div class="modal-title" style="margin-bottom:5px">ĐANG TẢI DỮ LIỆU...</div>
+            <div style="font-size:12px; color:#aaa; margin-bottom:15px">Vui lòng không tắt trang web</div>
+            
+            <div style="background:#333; height:4px; border-radius:2px; overflow:hidden; margin-bottom:10px;">
+                <div id="progress-bar" style="width:0%; height:100%; background:#fff; transition:width 0.3s"></div>
+            </div>
+            
+            <div class="log-text" id="loading-log">Đang khởi tạo...</div>
+        </div>
+    </div>
+
+    <script>
+        const PROXY_HOST = "https://doctruyen01.nguyenphuoctu6554.workers.dev/?url=";
+        const urlParams = new URLSearchParams(window.location.search);
+        const storyID = urlParams.get('id');
+        
+        let libraryData = [];
+        let currentStory = null;
+        let dlCount = 0;
+        let dlStart = 0;
+
+        // --- KHỞI TẠO (CHUYỂN SANG ASYNC) ---
+        window.onload = async function() {
+            // Lấy dữ liệu từ IndexedDB thay vì localStorage
+            libraryData = await localforage.getItem('aura_library_v2') || [];
+            
+            for(let cat of libraryData) {
+                const found = cat.stories.find(s => s.id === storyID);
+                if(found) { currentStory = found; break; }
+            }
+            if(!currentStory) { alert("Lỗi dữ liệu!"); window.location.href = 'library01.html'; return; }
+
+            // Lấy hình nền
+            const currentBgIndex = await localforage.getItem('aura_bg_index') || localStorage.getItem('aura_bg_index') || 1;
+            const bgElement = document.getElementById('bg-system');
+            if (bgElement) {
+                bgElement.style.backgroundImage = `url('./book0${currentBgIndex}.jpg')`;
+            }
+
+            renderInfo();
+            await updateStats();
+        };
+
+        function renderInfo() {
+            document.getElementById('header-title').innerText = currentStory.title;
+            document.getElementById('story-title').innerText = currentStory.title;
+            document.getElementById('story-author').innerText = currentStory.author;
+            if(currentStory.cover) document.getElementById('story-cover').src = currentStory.cover;
+            
+            // Tags
+            document.getElementById('story-tags').innerHTML = currentStory.tags.map(t => `<div class="tag-big">${t}</div>`).join('');
+            
+            // Đọc tiếp
+            const idx = currentStory.lastReadIndex || 0;
+            if(idx > 0) document.getElementById('last-read-txt').innerText = `Chương ${idx + 1}`;
+
+            // Bg
+            if(currentStory.customBg) {
+                document.getElementById('custom-bg-img').src = currentStory.customBg;
+                document.getElementById('custom-bg-img').style.display = 'block';
+            }
+
+            // --- LOGIC LẤY SỐ CHƯƠNG CAO NHẤT TỪ URL ---
+            let maxChapter = 0;
+            if (currentStory.chapters && currentStory.chapters.length > 0) {
+                currentStory.chapters.forEach(ch => {
+                    const match = ch.url.match(/\/(?:chuong|trang|phan|quyen|tap|chap)-(\d+)/i);
+                    if (match && match[1]) {
+                        const num = parseInt(match[1], 10);
+                        if (num > maxChapter) maxChapter = num;
+                    }
+                });
+                
+                if (maxChapter === 0) {
+                    maxChapter = currentStory.chapters.length;
+                }
+            }
+            document.getElementById('total-chapters').innerText = maxChapter;
+        }
+
+        // --- HỆ THỐNG CẬP NHẬT TRUYỆN MỚI ---
+        function openUpdateModal() { document.getElementById('modal-update-chapters').style.display = 'flex'; }
+
+        function parseManualChapters(rawText) {
+            const lines = rawText.trim().split('\n');
+            const chapters = [];
+            for (let line of lines) {
+                const splitIndex = line.lastIndexOf(' : ');
+                if (splitIndex !== -1) {
+                    let name = line.substring(0, splitIndex).trim();
+                    let url = line.substring(splitIndex + 3).trim();
+                    name = name.replace(/^\[\d+\]\s*/, '');
+                    if (name && url) chapters.push({ name: name, url: url });
+                }
+            }
+            return chapters;
+        }
+
+        async function handleUpdateStory() {
+            const rawText = document.getElementById('input-update-data').value.trim();
+            if (!rawText) return alert("Vui lòng dán dữ liệu chương!");
+
+            const newChapters = parseManualChapters(rawText);
+            if (newChapters.length === 0) return alert("Không nhận diện được cấu trúc chương! Bạn nhớ dán đúng định dạng Tên : Link nhé.");
+
+            if (!currentStory.chapters) currentStory.chapters = [];
+            
+            const existingUrls = new Set(currentStory.chapters.map(c => c.url));
+            let addedCount = 0;
+
+            newChapters.forEach(newChap => {
+                if (!existingUrls.has(newChap.url)) {
+                    currentStory.chapters.push(newChap);
+                    existingUrls.add(newChap.url); 
+                    addedCount++;
+                }
+            });
+
+            await saveData();
+            renderInfo(); 
+            
+            closeModal('modal-update-chapters');
+            document.getElementById('input-update-data').value = '';
+            
+            if(addedCount > 0) {
+                alert(`Thành công! Đã chèn thêm ${addedCount} link chương mới vào ngăn kéo.`);
+            } else {
+                alert("Không có chương mới nào được thêm. Toàn bộ link bạn dán đã tồn tại sẵn trong dữ liệu rồi.");
+            }
+        }
+
+        // --- CÁC HÀM XỬ LÝ DỮ LIỆU & TẢI ---
+        async function updateStats() {
+            let count = 0, size = 0;
+            // Duyệt dữ liệu ngầm trong IndexedDB thay vì localStorage
+            await localforage.iterate(function(value, key) {
+                if(key.startsWith(storyID + '_CH_')) {
+                    count++;
+                    size += (typeof value === 'string' ? value.length : JSON.stringify(value).length);
+                }
+            });
+            document.getElementById('downloaded-count').innerText = count;
+            document.getElementById('data-size').innerText = (size / 1024).toFixed(2);
+        }
+
+        function openStep1() {
+            document.getElementById('modal-step1').style.display = 'flex';
+            document.getElementById('input-dl-count').value = 20; 
+        }
+
+        function goToStep2() {
+            const val = document.getElementById('input-dl-count').value;
+            if(!val || val <= 0) return alert("Nhập số lượng hợp lệ!");
+            dlCount = parseInt(val);
+            
+            document.getElementById('modal-step1').style.display = 'none';
+            document.getElementById('modal-step2').style.display = 'flex';
+            
+            const nextChap = (currentStory.lastReadIndex || 0) + 1;
+            document.getElementById('input-dl-start').value = nextChap;
+        }
+
+        function backToStep1() {
+            document.getElementById('modal-step2').style.display = 'none';
+            document.getElementById('modal-step1').style.display = 'flex';
+        }
+
+        async function confirmDownload() {
+            const val = document.getElementById('input-dl-start').value;
+            if(!val || val <= 0) return alert("Nhập chương bắt đầu hợp lệ!");
+            dlStart = parseInt(val);
+
+            if(!currentStory.chapters || currentStory.chapters.length === 0) {
+                alert("Chưa có danh sách link. Vui lòng bấm Cập Nhật để dán link vào!");
+                return;
+            }
+
+            document.getElementById('modal-step2').style.display = 'none';
+            document.getElementById('modal-loading-lock').style.display = 'flex';
+
+            const arrayStart = dlStart - 1;
+            const maxCount = currentStory.chapters.length - arrayStart;
+            const finalCount = Math.min(dlCount, maxCount);
+
+            if(finalCount <= 0) {
+                closeModal('modal-loading-lock');
+                alert("Đã hết chương để tải!");
+                return;
+            }
+
+            await processBatchDownload(arrayStart, finalCount);
+        }
+
+        async function processBatchDownload(startIndex, totalToDownload) {
+            let success = 0;
+            const batchSize = 5; 
+            
+            for (let i = 0; i < totalToDownload; i += batchSize) {
+                const currentBatchEnd = Math.min(i + batchSize, totalToDownload);
+                const currentBatchSize = currentBatchEnd - i;
+                
+                const percent = Math.floor((i / totalToDownload) * 100);
+                updateLog(`Đang tải gói dữ liệu... (${i}/${totalToDownload})`, percent);
+
+                const promises = [];
+                for (let j = 0; j < currentBatchSize; j++) {
+                    const globalIndex = startIndex + i + j;
+                    promises.push(downloadSingleChapter(globalIndex));
+                }
+
+                await Promise.all(promises);
+                success += currentBatchSize;
+
+                if (currentBatchEnd < totalToDownload) {
+                    updateLog("Đang nghỉ ngơi để tránh bị chặn...", percent);
+                    await new Promise(r => setTimeout(r, 1500)); 
+                }
+            }
+
+            updateLog("Hoàn tất!", 100);
+            setTimeout(async () => {
+                closeModal('modal-loading-lock');
+                await updateStats();
+                alert(`Đã tải xong ${success} chương!`);
+            }, 1000);
+        }
+
+        async function downloadSingleChapter(index) {
+            const chapInfo = currentStory.chapters[index];
+            const keyS1 = `${storyID}_CH_${index}`;
+
+            // Kiểm tra trong IndexedDB
+            const existingData = await localforage.getItem(keyS1);
+            if(existingData) return;
+
+            try {
+                const res = await fetch(PROXY_HOST + encodeURIComponent(chapInfo.url));
+                if(!res.ok) throw new Error("Err");
+                const html = await res.text();
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, "text/html");
+                
+                const contentDiv = doc.getElementById('bookContentBody');
+                if(contentDiv) {
+                    const paras = contentDiv.querySelectorAll('p');
+                    let cleanText = "";
+                    paras.forEach(p => {
+                        if(p.innerText.trim().length > 0) {
+                            cleanText += `<p>${p.innerText}</p>\n`;
+                        }
+                    });
+                    // Lưu thẳng vào IndexedDB (Vô hạn dung lượng)
+                    if(cleanText.length > 0) await localforage.setItem(keyS1, cleanText);
+                }
+            } catch(e) { console.warn(`Lỗi: ${e.message}`); }
+        }
+
+        function updateLog(msg, percent) {
+            document.getElementById('loading-log').innerText = msg;
+            document.getElementById('progress-bar').style.width = percent + "%";
+        }
+
+        function handleBgUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    currentStory.customBg = e.target.result;
+                    await saveData(); 
+                    renderInfo();
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function clearStoryData() {
+            if(!confirm("Xóa toàn bộ dữ liệu offline của truyện này?")) return;
+            
+            const keysToDelete = [];
+            // Tìm tất cả các key thuộc về truyện này trong kho IndexedDB
+            await localforage.iterate(function(value, key) {
+                if(key.startsWith(storyID + '_CH_')) {
+                    keysToDelete.push(key);
+                }
+            });
+
+            // Tiến hành xóa
+            for(let key of keysToDelete) {
+                await localforage.removeItem(key);
+            }
+            await updateStats();
+        }
+
+        function readFromStart() { window.location.href = `library03.html?id=${storyID}&chapter=0`; }
+        function readContinue() { 
+            const idx = currentStory.lastReadIndex || 0;
+            window.location.href = `library03.html?id=${storyID}&chapter=${idx}`;
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        // HÀM LƯU GỌI BẰNG AWAIT
+        async function saveData() { await localforage.setItem('aura_library_v2', libraryData); }
+        
+    </script>
+</body>
+</html>

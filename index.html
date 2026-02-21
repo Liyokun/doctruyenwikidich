@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA - LIOKUN GATE</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+    <style>
+        /* Ẩn ảnh nhân vật lúc đầu để tránh nháy ảnh cũ */
+        #main-char-img {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            background: #000;
+            transition: opacity 0.5s; /* Mượt mà khi chuyển trang */
+        }
+
+        /* --- CSS CHẶN NHÁY (CHẠY NGAY TỨC THÌ) --- */
+        .no-splash #splash-screen {
+            display: none !important;
+        }
+
+        .no-splash #main-app {
+            opacity: 1 !important;
+            transition: background-image 0.5s ease-in-out !important; /* Tắt độ trễ của opacity khi quay lại */
+        }
+
+        /* --- 1. SPLASH SCREEN (MÀN HÌNH CHỜ - TĨNH) --- */
+        #splash-screen {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 9999;
+            transition: opacity 1s ease-out;
+        }
+
+        #splash-char {
+            width: 180px; height: auto;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+        }
+
+        #splash-text {
+            margin-top: 20px;
+            font-size: 32px; font-weight: bold; letter-spacing: 8px;
+            color: #fff;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            animation: fadeInText 1s forwards 0.5s;
+        }
+
+        /* --- 2. MAIN INTERFACE (GIAO DIỆN CHÍNH - ĐỘNG) --- */
+        #main-app {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: #000;
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            opacity: 0;
+            transition: opacity 1s ease-in, background-image 0.5s ease-in-out;
+        }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.1); z-index: 1;
+        }
+
+        .char-container {
+            z-index: 10;
+            position: relative;
+            width: 250px; height: 350px;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        #main-char-img {
+            max-width: 100%; max-height: 100%;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+            transition: opacity 0.3s;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .center-btn {
+            z-index: 20;
+            margin-top: 30px;
+            padding: 12px 35px;
+            font-size: 16px; font-weight: bold; letter-spacing: 2px;
+            color: #fff; text-transform: uppercase;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #fff;
+            border-radius: 50px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .center-btn:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.2); }
+
+        .corner-btn {
+            position: absolute; bottom: 30px;
+            z-index: 20;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #fff;
+            color: #fff;
+            font-size: 24px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+            transition: 0.3s;
+            user-select: none;
+        }
+        .corner-btn:active { transform: scale(0.9); }
+
+        #btn-skin { left: 20px; }
+        #btn-bg { right: 20px; }
+
+        @keyframes fadeInText { to { opacity: 1; } }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        // Splash screen dùng sessionStorage (Bộ nhớ tạm) nên không cần chuyển qua IndexedDB
+        if (sessionStorage.getItem('aura_splash_shown')) {
+            document.documentElement.classList.add('no-splash');
+        }
+    </script>
+
+    <div id="splash-screen">
+        <img src="./book000.png" id="splash-char" alt="Intro" onerror="this.style.display='none'">
+        <div id="splash-text">LIOKUN</div>
+    </div>
+
+    <div id="main-app">
+        <div class="overlay"></div>
+
+        <div class="char-container">
+            <img src="./book01.png" id="main-char-img" alt="Character">
+        </div>
+
+        <button class="center-btn" onclick="enterLibrary()">THƯ VIỆN</button>
+
+        <div id="btn-skin" class="corner-btn" onclick="changeCharacter()">🧸</div>
+
+        <div id="btn-bg" class="corner-btn" onclick="changeBackground()">📷</div>
+    </div>
+
+    <script>
+        const SPLASH_TIME = 2500;
+        
+        const TOTAL_SKINS = 5;
+        let currentSkinIndex = 1;
+
+        const TOTAL_BGS = 5; 
+        let currentBgIndex = 1; 
+
+        // Chuyển window.onload thành async để dùng await lấy dữ liệu từ IndexedDB
+        window.onload = async function() {
+            // 1. Lấy dữ liệu đã lưu từ IndexedDB
+            const savedSkin = await localforage.getItem('aura_skin_index');
+            if(savedSkin) {
+                currentSkinIndex = parseInt(savedSkin);
+            }
+            updateCharImage(); 
+
+            const savedBg = await localforage.getItem('aura_bg_index');
+            if(savedBg) {
+                currentBgIndex = parseInt(savedBg);
+            }
+            updateBgImage(); 
+
+            // 2. Logic điều khiển Splash cho lần đầu tiên (Vẫn giữ Session Storage)
+            const hasShownSplash = sessionStorage.getItem('aura_splash_shown');
+            const splash = document.getElementById('splash-screen');
+            const app = document.getElementById('main-app');
+
+            if (!hasShownSplash) {
+                setTimeout(() => {
+                    splash.style.opacity = '0';
+                    setTimeout(() => {
+                        splash.style.display = 'none';
+                        app.style.opacity = '1';
+                        sessionStorage.setItem('aura_splash_shown', 'true');
+                    }, 1000); 
+                }, SPLASH_TIME);
+            }
+        };
+
+        // Chuyển hàm lưu thành async
+        async function changeCharacter() {
+            currentSkinIndex++;
+            if (currentSkinIndex > TOTAL_SKINS) currentSkinIndex = 1;
+            updateCharImage();
+            
+            // Lưu vào IndexedDB
+            await localforage.setItem('aura_skin_index', currentSkinIndex);
+        }
+
+        function updateCharImage() {
+            const img = document.getElementById('main-char-img');
+            const fileName = `./book0${currentSkinIndex}.png`;
+            
+            img.style.opacity = 0;
+            setTimeout(() => {
+                img.src = fileName;
+                img.style.opacity = 1;
+            }, 150);
+        }
+
+        // Chuyển hàm lưu thành async
+        async function changeBackground() {
+            currentBgIndex++;
+            if (currentBgIndex > TOTAL_BGS) currentBgIndex = 1;
+            updateBgImage();
+            
+            // Lưu vào IndexedDB
+            await localforage.setItem('aura_bg_index', currentBgIndex);
+        }
+
+        function updateBgImage() {
+            const app = document.getElementById('main-app');
+            const bgName = `url('./book0${currentBgIndex}.jpg')`;
+            app.style.backgroundImage = bgName;
+        }
+
+        function enterLibrary() {
+            document.body.style.opacity = 0;
+            setTimeout(() => {
+                window.location.href = 'library01.html';
+            }, 500);
+        }
+    </script>
+</body>
+</html>
