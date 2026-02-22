@@ -29,8 +29,9 @@
             justify-content: center; 
             border-bottom: 1px solid rgba(255,255,255,0.2); 
             background: rgba(0,0,0,0.5); 
-            backdrop-filter: blur(10px); 
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(50px); 
+            -webkit-backdrop-filter: blur(50px);
+            z-index: 10;
         }
 
         .header-title { font-size: 20px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
@@ -76,6 +77,18 @@
         }
         .guide-btn:active { opacity: 0.5; transform: translateY(-50%) scale(0.9); }
 
+        /* THANH TÌM KIẾM TỔNG TẠI SẢNH (BỔ SUNG) */
+        .global-search-bar {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .global-search-bar:active { background: rgba(255, 255, 255, 0.1); }
+        .global-search-text { color: #aaa; font-size: 15px; flex: 1; }
+
         .list-container { flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 100px; }
         
         .cat-card { 
@@ -100,17 +113,33 @@
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.2); 
             margin-bottom: 20px; border-radius: 12px; overflow: hidden; transition: 0.3s; 
+            scroll-margin-top: 80px; /* Hỗ trợ nhảy vọt không lẹm khung */
         }
         .story-header { padding: 25px; font-weight: bold; font-size: 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; gap: 10px; }
         .story-cover-thumb { width: 50px; height: 70px; object-fit: cover; border-radius: 4px; background: #222; margin-right: 15px; flex-shrink: 0; }
         .story-details { max-height: 0; overflow: hidden; background: rgba(0,0,0,0.4); transition: max-height 0.4s ease; padding: 0 25px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .story-task.expanded .story-details { max-height: 800px; padding-bottom: 25px; }
+        .story-task.expanded .story-details { max-height: 1000px; padding-bottom: 25px; } /* Mở rộng chứa Note */
         
         .toggle-icon { display: inline-block; transition: transform 0.3s ease; }
         .story-task.expanded .toggle-icon { transform: rotate(180deg); }
 
-        .scroll-container { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; scrollbar-width: none; }
+        /* ÉP DÒNG TÁC GIẢ CHẠY NGANG (CHỐNG LỖI CHÁO HEO) */
+        .author-text { font-size: 14px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; margin-bottom: 10px; display: block; }
+        .scroll-container { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; scrollbar-width: none; -ms-overflow-style: none; }
+        .scroll-container::-webkit-scrollbar { display: none; }
         .tag-pill { background: #333; padding: 6px 12px; border-radius: 6px; font-size: 13px; color: #eee; flex-shrink: 0; }
+        
+        /* KHU VỰC GHI CHÚ BÊN TRONG THẺ TRUYỆN (BỔ SUNG) */
+        .story-note-area {
+            width: 100%; height: 80px;
+            background: rgba(0,0,0,0.5); border: 1px dashed rgba(255,255,255,0.3);
+            color: #fff; border-radius: 8px; padding: 12px;
+            margin-top: 15px; font-family: inherit; font-size: 14px;
+            resize: vertical; outline: none; transition: border 0.3s;
+        }
+        .story-note-area:focus { border-color: #00f2ff; }
+        .story-note-area::placeholder { color: #666; font-style: italic; }
+
         .btn-read { background: #fff; color: #000; padding: 12px 30px; border-radius: 30px; font-weight: bold; font-size: 15px; text-decoration: none; display: inline-block; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
         .btn-delete { color: #ff4444; font-size: 14px; cursor: pointer; text-decoration: underline; padding: 10px; }
         
@@ -120,6 +149,25 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 2000; justify-content: center; align-items: center; }
         .modal-box { width: 85%; max-width: 350px; background: #111; border: 1px solid #fff; border-radius: 15px; padding: 30px; text-align: center; }
         .modal-box.wide { max-width: 90%; width: 450px; }
+
+        /* Kén Popup TÌM KIẾM (BỔ SUNG) */
+        .modal-box.search-box { 
+            width: 90%; max-width: 450px; max-height: 85vh; 
+            display: flex; flex-direction: column; padding: 20px;
+        }
+        .search-results-container { 
+            flex: 1; overflow-y: auto; text-align: left; margin-top: 15px; margin-bottom: 15px; 
+            border-top: 1px solid #333; padding-top: 15px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .search-result-card {
+            display: flex; gap: 15px; padding: 10px; background: #222; border-radius: 8px;
+            cursor: pointer; border: 1px solid #333; transition: 0.2s; align-items: center;
+        }
+        .search-result-card:active { background: #333; }
+        .search-result-cover { width: 45px; height: 60px; object-fit: cover; border-radius: 4px; background: #000; flex-shrink: 0;}
+        .search-result-info { flex: 1; overflow: hidden; }
+        .search-result-title { font-weight: bold; font-size: 15px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .search-result-note { font-size: 12px; color: #aaa; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
         .spinner { width: 50px; height: 50px; border: 5px solid #333; border-top: 5px solid #fff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -134,6 +182,12 @@
             <div class="storage-text" id="storage-text">Dữ liệu còn lại: Đang tính... / 1000 MB</div>
             <div class="guide-btn" onclick="openModal('modal-guide')">&#8594;</div>
         </div>
+        
+        <div class="global-search-bar" onclick="openSearchModal()">
+            <span style="font-size: 20px;">🔎</span>
+            <span class="global-search-text">Tìm kiếm truyện / ghi chú...</span>
+        </div>
+
         <div id="category-list" class="list-container"></div>
         <div class="fab-btn" onclick="openModal('modal-add-cat')">+</div>
     </div>
@@ -234,46 +288,55 @@
             <button onclick="closeModal('modal-guide')" style="width:100%; padding:15px; background:#fff; color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer;">OK</button>
         </div>
     </div>
+    
     <div id="modal-confirm-story-delete" class="modal-overlay">
-    <div class="modal-box">
-        <div style="margin-bottom:15px; font-weight:bold; color:#ff4444; font-size:20px;">XÓA TRUYỆN?</div>
-        <div style="margin-bottom:25px; color:#ccc; font-size:14px; line-height:1.5;">Hành động này sẽ xóa sạch <b>toàn bộ dữ liệu chương</b> đã tải offline của truyện này. Bạn chắc chắn chứ?</div>
-        <div style="display:flex; gap:10px">
-            <button onclick="closeModal('modal-confirm-story-delete')" style="flex:1; padding:12px; background:#333; color:#fff; border:none; border-radius:8px; font-weight:bold;">HỦY</button>
-            <button onclick="executeDeleteStory()" style="flex:1; padding:12px; background:#ff4444; color:#fff; font-weight:bold; border:none; border-radius:8px;">XÓA SẠCH</button>
+        <div class="modal-box">
+            <div style="margin-bottom:15px; font-weight:bold; color:#ff4444; font-size:20px;">XÓA TRUYỆN?</div>
+            <div style="margin-bottom:25px; color:#ccc; font-size:14px; line-height:1.5;">Hành động này sẽ xóa sạch <b>toàn bộ dữ liệu chương</b> đã tải offline của truyện này. Bạn chắc chắn chứ?</div>
+            <div style="display:flex; gap:10px">
+                <button onclick="closeModal('modal-confirm-story-delete')" style="flex:1; padding:12px; background:#333; color:#fff; border:none; border-radius:8px; font-weight:bold;">HỦY</button>
+                <button onclick="executeDeleteStory()" style="flex:1; padding:12px; background:#ff4444; color:#fff; font-weight:bold; border:none; border-radius:8px;">XÓA SẠCH</button>
+            </div>
         </div>
     </div>
-</div>
 
+    <div id="modal-search" class="modal-overlay">
+        <div class="modal-box search-box">
+            <div style="margin-bottom:15px; font-weight:bold; font-size: 18px;">TÌM KIẾM HỆ THỐNG</div>
+            <input type="text" id="input-search-query" oninput="executeSearch()" style="width:100%; padding:15px; background:#000; border:1px solid #00f2ff; color:#fff; border-radius:8px; outline:none;" placeholder="Nhập tên truyện hoặc từ khóa ghi chú...">
+            
+            <div class="search-results-container" id="search-results-box">
+                <div style="text-align:center; color:#666; font-style:italic; margin-top: 20px;">Cuộn để xem thêm kết quả...</div>
+            </div>
+
+            <button onclick="closeModal('modal-search')" style="padding:15px; background:#333; color:#fff; font-weight:bold; border:none; border-radius:8px; width:100%; cursor:pointer;">ĐÓNG</button>
+        </div>
+    </div>
     <script>
         const PROXY_HOST = "https://doctruyen01.nguyenphuoctu6554.workers.dev/?url=";
         let libraryData = [];
         let currentCatID = null;
         let temporaryStoryUrl = "";
         let actionCatID = null; 
-        let storyIDToDelete = null; // Lưu ID truyện đang chờ xác nhận xóa
+        let storyIDToDelete = null;
 
-        // HÀM TÍNH TOÁN DUNG LƯỢNG (DÙNG INDEXEDDB)
+        // HÀM TÍNH TOÁN DUNG LƯỢNG (GIỮ NGUYÊN 100%)
         async function updateStorageIndicator() {
             let totalBytes = 0;
             try {
-                // Vòng lặp duyệt qua toàn bộ "Kho hàng" IndexedDB
                 await localforage.iterate(function(value, key) {
                     let valStr = typeof value === 'string' ? value : JSON.stringify(value);
-                    totalBytes += (key.length + (valStr ? valStr.length : 0)) * 2; // JavaScript dùng UTF-16 (2 bytes/kí tự)
+                    totalBytes += (key.length + (valStr ? valStr.length : 0)) * 2; 
                 });
             } catch(e) { console.warn("Lỗi tính dung lượng: ", e); }
             
             let totalMB = totalBytes / (1024 * 1024);
-            
-            // Đặt mốc 1000 MB
             let remaining = 1000 - totalMB;
             if (remaining < 0) remaining = 0;
             
             const numEl = document.getElementById('storage-text');
             if (numEl) {
                 numEl.innerText = `Dữ liệu còn lại: ${remaining.toFixed(2)} / 1000 MB`;
-                // Nếu dưới 500 MB thì cảnh báo đỏ
                 if (remaining < 500) {
                     numEl.style.color = '#ff4444'; 
                 } else {
@@ -282,17 +345,14 @@
             }
         }
 
-        // NÂNG CẤP LÊN ASYNC CHO INDEXEDDB
         window.onload = async function() {
-            // Lấy dữ liệu thư viện từ IndexedDB thay vì localStorage
             libraryData = await localforage.getItem('aura_library_v2') || [];
             
-            // Lấy nền đã chọn (Hỗ trợ lấy từ localforage hoặc fallback localStorage nếu chưa kịp chuyển)
             let currentBgIndex = await localforage.getItem('aura_bg_index') || localStorage.getItem('aura_bg_index') || 1;
             document.body.style.backgroundImage = `url('./book0${currentBgIndex}.jpg')`;
             
             renderCategories();
-            updateStorageIndicator(); // Cập nhật dung lượng 1000 MB
+            updateStorageIndicator(); 
         };
 
         function renderCategories() {
@@ -322,35 +382,28 @@
         function openDeleteConfirm() { closeModal('modal-cat-options'); openModal('modal-delete-cat'); }
 
         async function handleDeleteCategory() {
-    if (actionCatID) {
-        // 1. Tìm chủ đề sắp bị xóa để lấy danh sách truyện bên trong
-        const catToDelete = libraryData.find(c => c.id === actionCatID);
-        
-        if (catToDelete && catToDelete.stories.length > 0) {
-            // 2. Thu thập tất cả ID truyện trong chủ đề này
-            const storyIDs = catToDelete.stories.map(s => s.id);
-            
-            // 3. Quét toàn bộ kho IndexedDB để xóa dữ liệu chương (_CH_)
-            // Chúng ta dùng iterate để duyệt một lần cho sạch
-            await localforage.iterate(function(value, key) {
-                // Kiểm tra xem key này có thuộc về bất kỳ truyện nào trong danh sách xóa không
-                const belongsToDeletedStory = storyIDs.some(id => key.startsWith(id + '_CH_'));
+            if (actionCatID) {
+                const catToDelete = libraryData.find(c => c.id === actionCatID);
                 
-                if (belongsToDeletedStory) {
-                    localforage.removeItem(key); // Xóa luôn ruột truyện
+                if (catToDelete && catToDelete.stories.length > 0) {
+                    const storyIDs = catToDelete.stories.map(s => s.id);
+                    await localforage.iterate(function(value, key) {
+                        const belongsToDeletedStory = storyIDs.some(id => key.startsWith(id + '_CH_'));
+                        if (belongsToDeletedStory) {
+                            localforage.removeItem(key); 
+                        }
+                    });
                 }
-            });
+
+                libraryData = libraryData.filter(c => c.id !== actionCatID);
+                
+                await saveData(); 
+                renderCategories();
+                alert("Đã xóa sạch chủ đề và toàn bộ nội dung truyện liên quan!");
+            }
+            closeModal('modal-delete-cat');
         }
 
-        // 4. Xóa cái "vỏ" chủ đề khỏi danh sách quản lý
-        libraryData = libraryData.filter(c => c.id !== actionCatID);
-        
-        await saveData(); 
-        renderCategories();
-        alert("Đã xóa sạch chủ đề và toàn bộ nội dung truyện liên quan!");
-    }
-    closeModal('modal-delete-cat');
-}
         async function handleAddCategory() {
             const name = document.getElementById('input-cat-name').value.trim();
             if (name) { libraryData.push({ id: 'CAT_' + Date.now(), name, stories: [] }); await saveData(); renderCategories(); }
@@ -365,15 +418,122 @@
 
         function closeVirtualTab() { document.getElementById('virtual-tab').classList.remove('active'); renderCategories(); }
 
+        // RENDERS STORIES CÓ GHI CHÚ
         function renderStories(cat) {
             const container = document.getElementById('story-list'); container.innerHTML = '';
+            if (cat.stories.length === 0) { container.innerHTML = '<div style="text-align:center; color:#ddd; margin-top:80px;">Chưa có link truyện nào.</div>'; return; }
+            
             cat.stories.forEach(s => {
-                const task = document.createElement('div'); task.className = 'story-task';
-                task.innerHTML = `<div class="story-header" onclick="this.parentElement.classList.toggle('expanded')"><img src="${s.cover}" class="story-cover-thumb" onerror="this.style.display='none'"><span>${s.title}</span><span class="toggle-icon">▼</span></div><div class="story-details"><p style="font-size:14px;color:#ccc">Tác giả: ${s.author}</p><div class="scroll-container">${s.tags.map(t=>`<span class="tag-pill">${t}</span>`).join('')}</div><div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center"><span onclick="deleteStory('${s.id}')" style="color:#ff4444; font-size:13px; cursor:pointer; font-weight:bold;">Xóa truyện</span><a href="library02.html?id=${s.id}" class="btn-read">ĐỌC NGAY</a></div></div>`;
+                const task = document.createElement('div'); 
+                task.className = 'story-task';
+                task.id = 'story-card-' + s.id; 
+                
+                const currentNote = s.note || "";
+
+                task.innerHTML = `
+                <div class="story-header" onclick="this.parentElement.classList.toggle('expanded')">
+                    <img src="${s.cover}" class="story-cover-thumb" onerror="this.src='./book01.jpg'">
+                    <span>${s.title}</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="story-details">
+                    <div class="author-text">Tác giả: ${s.author}</div>
+                    <div class="scroll-container">${s.tags.map(t=>`<span class="tag-pill">${t}</span>`).join('')}</div>
+                    
+                    <textarea class="story-note-area" placeholder="Thêm ghi chú cho truyện này..." onchange="saveStoryNote('${cat.id}', '${s.id}', this.value)">${currentNote}</textarea>
+
+                    <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center">
+                        <span onclick="deleteStory('${s.id}')" style="color:#ff4444; font-size:13px; cursor:pointer; font-weight:bold;">Xóa truyện</span>
+                        <a href="library02.html?id=${s.id}" class="btn-read">ĐỌC NGAY</a>
+                    </div>
+                </div>`;
                 container.appendChild(task);
             });
         }
 
+        // HÀM LƯU GHI CHÚ (MỚI)
+        async function saveStoryNote(categoryId, storyId, noteValue) {
+            const cat = libraryData.find(c => c.id === categoryId);
+            if (cat) {
+                const story = cat.stories.find(s => s.id === storyId);
+                if (story) {
+                    story.note = noteValue.trim();
+                    await saveData();
+                }
+            }
+        }
+
+        // ==========================================
+        // KHỐI TÌM KIẾM ĐA NĂNG (MỚI)
+        // ==========================================
+        function openSearchModal() {
+            document.getElementById('input-search-query').value = '';
+            document.getElementById('search-results-box').innerHTML = '<div style="text-align:center; color:#666; font-style:italic; margin-top: 20px;">Cuộn để xem thêm kết quả...</div>';
+            openModal('modal-search');
+            setTimeout(() => document.getElementById('input-search-query').focus(), 100);
+        }
+
+        function executeSearch() {
+            const keyword = document.getElementById('input-search-query').value.toLowerCase().trim();
+            const container = document.getElementById('search-results-box');
+            container.innerHTML = '';
+
+            if(!keyword) {
+                container.innerHTML = '<div style="text-align:center; color:#666; font-style:italic; margin-top: 20px;">Bắt đầu gõ để tìm kiếm...</div>';
+                return;
+            }
+
+            let results = [];
+            libraryData.forEach(cat => {
+                cat.stories.forEach(s => {
+                    const titleMatch = s.title.toLowerCase().includes(keyword);
+                    const noteMatch = s.note && s.note.toLowerCase().includes(keyword);
+                    if (titleMatch || noteMatch) {
+                        results.push({ story: s, catId: cat.id });
+                    }
+                });
+            });
+
+            if(results.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#ff4444; padding: 20px;">Không tìm thấy kết quả nào trùng khớp.</div>';
+                return;
+            }
+
+            results.forEach(res => {
+                const item = document.createElement('div');
+                item.className = 'search-result-card';
+                item.onclick = () => jumpToStory(res.catId, res.story.id); 
+                
+                const shortNote = res.story.note ? (res.story.note.length > 50 ? res.story.note.substring(0,50) + '...' : res.story.note) : 'Không có ghi chú';
+                
+                item.innerHTML = `
+                    <img src="${res.story.cover}" class="search-result-cover" onerror="this.src='./book01.jpg'">
+                    <div class="search-result-info">
+                        <div class="search-result-title">${res.story.title}</div>
+                        <div class="search-result-note">📝 ${shortNote}</div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function jumpToStory(catId, storyId) {
+            closeModal('modal-search'); 
+            openVirtualTab(catId);      
+            
+            setTimeout(() => {
+                const targetStory = document.getElementById('story-card-' + storyId);
+                if (targetStory) {
+                    targetStory.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    if (!targetStory.classList.contains('expanded')) {
+                        targetStory.classList.add('expanded');
+                    }
+                }
+            }, 300);
+        }
+        // ==========================================
+
+        // CÁC HÀM CŨ GIỮ NGUYÊN 100%
         function openStepTwo() {
             const url = document.getElementById('input-story-url').value.trim();
             if (!url) { alert("Vui lòng nhập link mục lục truyện!"); return; }
@@ -418,6 +578,7 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlText, "text/html");
 
+                // Giữ nguyên logic quét của bản Đầy đủ
                 const title = doc.querySelector(".cover-info h2")?.textContent.trim() || doc.title || "Chưa rõ tên";
                 const author = doc.querySelector(".book-info a[href*='tac-gia']")?.textContent.trim() || "Chưa rõ";
                 let cover = doc.querySelector(".cover-wrapper img")?.getAttribute("src") || "";
@@ -425,7 +586,8 @@
                 const tags = Array.from(doc.querySelectorAll(".book-desc a")).map(el => el.textContent.trim());
 
                 const cat = libraryData.find(c => c.id === currentCatID);
-                cat.stories.push({ id: 'STR_' + Date.now(), title: title, author: author, cover: cover, tags: tags, url: temporaryStoryUrl, chapters: chaptersList, lastReadIndex: 0 });
+                // Bổ sung thêm note: ""
+                cat.stories.push({ id: 'STR_' + Date.now(), title: title, author: author, cover: cover, tags: tags, url: temporaryStoryUrl, chapters: chaptersList, lastReadIndex: 0, note: "" });
                 
                 await saveData(); 
                 renderStories(cat); 
@@ -438,7 +600,6 @@
             } catch (err) { closeModal('modal-loading'); alert("Lỗi khi kết nối lấy thông tin truyện: " + err.message); }
         }
 
-        // LƯU DỮ LIỆU VÀO INDEXEDDB
         async function saveData() { 
             await localforage.setItem('aura_library_v2', libraryData); 
             updateStorageIndicator();
@@ -448,48 +609,42 @@
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function updateLoadingText(t) { document.getElementById('loading-text').innerText = t; }
         
-        // Hàm này chỉ để mở bảng hỏi
-function deleteStory(id) {
-    storyIDToDelete = id;
-    openModal('modal-confirm-story-delete');
-}
-
-// Hàm này mới thực sự làm nhiệm vụ xóa khi bạn bấm nút "XÓA SẠCH" trên Modal
-async function executeDeleteStory() {
-    const id = storyIDToDelete;
-    if (!id) return;
-
-    closeModal('modal-confirm-story-delete');
-    updateLoadingText("ĐANG QUÉT & XÓA DỮ LIỆU...");
-    openModal('modal-loading');
-
-    try {
-        const cat = libraryData.find(c => c.id === currentCatID);
-        if (cat) {
-            // 1. Xóa dữ liệu "ruột" trong IndexedDB
-            await localforage.iterate(function(value, key) {
-                if (key.startsWith(id + '_CH_')) {
-                    localforage.removeItem(key);
-                }
-            });
-
-            // 2. Xóa cái "vỏ" truyện
-            cat.stories = cat.stories.filter(s => s.id !== id);
-            
-            // 3. Lưu lại (Có await để đảm bảo an toàn)
-            await saveData(); 
-            renderStories(cat);
-            
-            closeModal('modal-loading');
-            // Cập nhật lại dung lượng hiển thị trên Header
-            await updateStorageIndicator(); 
+        function deleteStory(id) {
+            storyIDToDelete = id;
+            openModal('modal-confirm-story-delete');
         }
-    } catch (e) {
-        closeModal('modal-loading');
-        alert("Lỗi khi xóa: " + e.message);
-    }
-    storyIDToDelete = null;
-}
+
+        async function executeDeleteStory() {
+            const id = storyIDToDelete;
+            if (!id) return;
+
+            closeModal('modal-confirm-story-delete');
+            updateLoadingText("ĐANG QUÉT & XÓA DỮ LIỆU...");
+            openModal('modal-loading');
+
+            try {
+                const cat = libraryData.find(c => c.id === currentCatID);
+                if (cat) {
+                    await localforage.iterate(function(value, key) {
+                        if (key.startsWith(id + '_CH_')) {
+                            localforage.removeItem(key);
+                        }
+                    });
+
+                    cat.stories = cat.stories.filter(s => s.id !== id);
+                    
+                    await saveData(); 
+                    renderStories(cat);
+                    
+                    closeModal('modal-loading');
+                    await updateStorageIndicator(); 
+                }
+            } catch (e) {
+                closeModal('modal-loading');
+                alert("Lỗi khi xóa: " + e.message);
+            }
+            storyIDToDelete = null;
+        }
 
         // ==========================================
         // ĐOẠN MÃ COPY SNIPPET LÉN NGẦM VÀO CLIPBOARD
@@ -499,7 +654,6 @@ async function executeDeleteStory() {
             btn.style.transform = "scale(0.9)";
             setTimeout(() => btn.style.transform = "scale(1)", 200);
 
-            // Bọc lệnh trong dấu backtick (` `), sử dụng dấu (\\) kép để bảo vệ cú pháp Regex không bị gãy khi copy
             const snippet = `(function() {
     var finalList = [];
     var seenLinks = {};
@@ -555,7 +709,6 @@ async function executeDeleteStory() {
     alert("Hệ thống đã dọn sạch trùng lặp và CHÉP VÀO KHAY NHỚ TẠM!\\nTổng cộng: " + count + " kết quả duy nhất.");
 })();`;
 
-            // Kỹ thuật tạo textarea ảo để copy (Tương thích tốt trên cả Mobile)
             const tempInput = document.createElement("textarea");
             tempInput.value = snippet;
             document.body.appendChild(tempInput);
@@ -563,7 +716,6 @@ async function executeDeleteStory() {
             document.execCommand("copy");
             document.body.removeChild(tempInput);
 
-            // Hiệu ứng phản hồi thành công
             btn.innerText = "✔️ ĐÃ SAO CHÉP LỆNH";
             btn.style.background = "#2ecc71";
             btn.style.color = "#000";
